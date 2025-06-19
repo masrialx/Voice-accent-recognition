@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Accent Analyzer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>🎤 English Accent Analyzer</h1>
+    <form method="POST" action="/" onsubmit="return validateURL();">
+      <input type="text" name="url" id="url" placeholder="Enter public video URL" required>
+      <button type="submit">Analyze</button>
+    </form>
+    {% if result %}
+    <div class="result">
+      <h2>Result:</h2>
+      <p><strong>Accent:</strong> {{ result.accent }}</p>
+      <p><strong>Confidence:</strong> {{ result.confidence }}%</p>
+      <p><strong>Explanation:</strong> {{ result.explanation }}</p>
+    </div>
+    {% endif %}
+  </div>
+  <script>
+    function validateURL() {
+      const url = document.getElementById("url").value;
+      const pattern = /^(https?:\/\/)?([\w\-\.]+)\.([a-z]{2,6})(\/\S*)?$/;
+      if (!pattern.test(url)) {
+        alert("Please enter a valid URL!");
+        return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+</html>

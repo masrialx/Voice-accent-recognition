@@ -95,7 +95,7 @@ HTML_TEMPLATE = r"""
   <div class="container">
     <h1>🎤 English Accent Analyzer</h1>
     <form method="POST" action="/" enctype="multipart/form-data" id="analyzeForm">
-      <input type="text" name="url" id="url" placeholder="Enter public video URL (optional)" />
+      <input type="text" name="url" id="url" placeholder="Enter YouTube URL (optional)" />
       <input type="file" name="file" id="file" accept=".mp4,.wav" />
       <button type="submit" id="submitBtn">Analyze</button>
     </form>
@@ -141,7 +141,10 @@ HTML_TEMPLATE = r"""
     }
 
     document.getElementById("analyzeForm").addEventListener("submit", function (e) {
-      if (!validateInput()) return false;
+      if (!validateInput()) {
+        e.preventDefault();
+        return false;
+      }
       document.getElementById("submitBtn").disabled = true;
       document.getElementById("loader").classList.add("show");
     });
@@ -151,18 +154,16 @@ HTML_TEMPLATE = r"""
 """
 
 def download_video(url):
-    """Download video from any supported site using yt-dlp."""
     filename = f"{uuid.uuid4()}.mp4"
     video_path = os.path.join(UPLOAD_FOLDER, filename)
 
     ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',
+        'format': 'best',
         'outtmpl': video_path,
         'merge_output_format': 'mp4',
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
-        'ignoreerrors': False,
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -174,7 +175,6 @@ def download_video(url):
     return video_path
 
 def extract_audio(video_file):
-    """Extract audio as WAV 16kHz mono from video."""
     audio_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4()}.wav")
     clip = VideoFileClip(video_file)
     clip.audio.write_audiofile(audio_path, verbose=False, logger=None)
@@ -212,13 +212,9 @@ def index():
                 if file_path.endswith(".mp4"):
                     os.remove(file_path)
             elif url:
-                try:
-                    video_path = download_video(url)
-                    audio_path = extract_audio(video_path)
-                    os.remove(video_path)
-                except Exception as e:
-                    notification = "Failed to download video from URL. Please try uploading the video file directly."
-                    raise e
+                video_path = download_video(url)
+                audio_path = extract_audio(video_path)
+                os.remove(video_path)
             else:
                 raise Exception("Please provide a valid URL or upload a file.")
 
@@ -232,9 +228,6 @@ def index():
             }
             return render_template_string(HTML_TEMPLATE, result=result, notification=notification)
         except Exception as e:
-            # If notification not already set for URL download failure
-            if not notification:
-                notification = None
             return render_template_string(HTML_TEMPLATE, result={
                 "accent": "Error",
                 "confidence": 0,
@@ -244,4 +237,4 @@ def index():
     return render_template_string(HTML_TEMPLATE, notification=None)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5000)

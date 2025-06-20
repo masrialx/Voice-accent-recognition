@@ -29,3 +29,4 @@ static/*.cache
 .DS_Store
 .vscode/
 .idea/
+cookies.txt
